@@ -75,12 +75,18 @@ func (this *SyncFile) getFileSize() int64 {
 	return this.filesize
 }
 
-func (this *SyncFile) Write(data []byte) error {
+func (this *SyncFile) Write(data []byte, head ...bool) error {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
 	if !this.getChain() {
 		return this.write(data)
+	}
+	if len(head) == 0 {
+		return this.append(data)
+	}
+	if head[0] == true {
+		return this.insert(data)
 	}
 	return this.append(data)
 }
@@ -112,17 +118,33 @@ func (this *SyncFile) append(data []byte) (err error) {
 	return
 }
 
-func (this *SyncFile) Read(offset int64) (data []byte, err error) {
-	this.lock.RLock()
-	defer this.lock.RUnlock()
+func (this *SyncFile) insert(data []byte) (err error) {
+	var rest []byte
+	var file *os.File
+	this.setChain(false)
+	if rest, err = this.read(0); err != nil {
+		return
+	}
+	this.setChain(true)
+	if file, err = os.OpenFile(this.filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
+		return
+	}
+	file.Write(Int64ToBytes(int64(len(data))))
+	file.Write(data)
+	file.Write(rest)
+	file.Sync()
+	file.Close()
+	return
+}
 
+func (this *SyncFile) read(offset int64) (data []byte, err error) {
 	var file *os.File
 	if file, err = os.Open(this.filepath); err != nil {
 		return
 	}
 
 	var size int64
-	if this.GetChain() {
+	if this.getChain() {
 		offset += ChainFileEntryOffset
 		buffer := make([]byte, ChainFileEntryOffset)
 		if _, err = file.Read(buffer); err != nil {
@@ -138,6 +160,12 @@ func (this *SyncFile) Read(offset int64) (data []byte, err error) {
 	_, err = file.ReadAt(data, offset)
 	file.Close()
 	return
+}
+
+func (this *SyncFile) Read(offset int64) (data []byte, err error) {
+	this.lock.RLock()
+	defer this.lock.RUnlock()
+	return this.read(offset)
 }
 
 func (this *SyncFile) Cut() (data []byte, err error) {
