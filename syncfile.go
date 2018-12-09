@@ -138,8 +138,8 @@ func (this *SyncFile) insert(data ...[]byte) (err error) {
 		list = append(list, Int64ToBytes(int64(len(data[i])))...)
 		list = append(list, data[i]...)
 	}
+	list = append(list, rest...)
 	file.Write(list)
-	file.Write(rest)
 	file.Sync()
 	file.Close()
 	this.setFileSize(int64(len(list)))
