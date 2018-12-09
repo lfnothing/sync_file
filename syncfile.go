@@ -127,8 +127,10 @@ func (this *SyncFile) insert(data ...[]byte) (err error) {
 	var file *os.File
 	this.setChain(false)
 	defer this.setChain(true)
-	if rest, err = this.read(0); err != nil {
-		return
+	if this.getFileSize() != 0 {
+		if rest, err = this.read(0); err != nil {
+			return
+		}
 	}
 	if file, err = os.OpenFile(this.filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return
