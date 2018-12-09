@@ -83,7 +83,7 @@ func (this *SyncFileService) Serve() {
 						}
 						this.outputs[key] <- serviceData
 					case SyncFileWrite:
-						err := syncfile.Write(input.Data)
+						err := syncfile.Write(false, input.Data)
 						serviceData := SyncFileServiceData{
 							Err: err,
 						}

@@ -35,32 +35,32 @@ func TestSyncFile_Write(t *testing.T) {
 	wg.Add(5)
 	go func() {
 		defer wg.Done()
-		syncFile.Write(syncFileBytes)
+		syncFile.Write(true, syncFileBytes)
 	}()
 
 	// chain file write
 	go func() {
 		defer wg.Done()
-		syncChainFile.Write(syncChainFileBytes1)
+		syncChainFile.Write(false, syncChainFileBytes1)
 	}()
 	go func() {
 		defer wg.Done()
-		syncChainFile.Write(syncChainFileBytes2)
+		syncChainFile.Write(false, syncChainFileBytes2)
 	}()
 	go func() {
 		defer wg.Done()
-		syncChainFile.Write(syncChainFileBytes3)
+		syncChainFile.Write(false, syncChainFileBytes3)
 	}()
 	go func() {
 		defer wg.Done()
-		syncChainFile.Write(syncChainFileBytes4)
+		syncChainFile.Write(false, syncChainFileBytes4)
 	}()
 
 	wg.Wait()
-	syncChainFile.Write(syncChainFileBytes4, true)
-	syncChainFile.Write(syncChainFileBytes3, true)
-	syncChainFile.Write(syncChainFileBytes2, true)
-	syncChainFile.Write(syncChainFileBytes1, true)
+	syncChainFile.Write(true, syncChainFileBytes4)
+	syncChainFile.Write(true, syncChainFileBytes3)
+	syncChainFile.Write(true, syncChainFileBytes2)
+	syncChainFile.Write(true, syncChainFileBytes1)
 }
 
 func TestSyncFile_Read(t *testing.T) {

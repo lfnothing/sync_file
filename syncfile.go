@@ -75,50 +75,54 @@ func (this *SyncFile) getFileSize() int64 {
 	return this.filesize
 }
 
-func (this *SyncFile) Write(data []byte, head ...bool) error {
+func (this *SyncFile) Write(head bool, data ...[]byte) error {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
 	if !this.getChain() {
-		return this.write(data)
+		return this.write(data...)
 	}
-	if len(head) == 0 {
-		return this.append(data)
+	if head == true {
+		return this.insert(data...)
 	}
-	if head[0] == true {
-		return this.insert(data)
-	}
-	return this.append(data)
+	return this.append(data...)
 }
 
-func (this *SyncFile) write(data []byte) (err error) {
+func (this *SyncFile) write(data ...[]byte) (err error) {
 	var file *os.File
 	if file, err = os.OpenFile(this.filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return
 	}
-	file.Write(data)
+	var list []byte
+	for i := 0; i < len(data); i++ {
+		list = append(list, data[i]...)
+	}
+	file.Write(list)
 	file.Sync()
 	file.Close()
-	this.setFileSize(int64(len(data)))
+	this.setFileSize(int64(len(list)))
 	return
 }
 
-func (this *SyncFile) append(data []byte) (err error) {
+func (this *SyncFile) append(data ...[]byte) (err error) {
 	var file *os.File
 	fz := this.getFileSize()
 	if file, err = os.OpenFile(this.filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600); err != nil {
 		return
 	}
-	file.Write(Int64ToBytes(int64(len(data))))
-	file.Write(data)
+	var list []byte
+	for i := 0; i < len(data); i++ {
+		list = append(list, Int64ToBytes(int64(len(data[i])))...)
+		list = append(list, data[i]...)
+	}
+	file.Write(list)
 	file.Sync()
 	file.Close()
-	fz += ChainFileEntryOffset + int64(len(data))
-	this.setFileSize(fz)
+	this.setFileSize(fz + int64(len(list)))
 	return
 }
 
-func (this *SyncFile) insert(data []byte) (err error) {
+func (this *SyncFile) insert(data ...[]byte) (err error) {
 	var rest []byte
 	var file *os.File
 	this.setChain(false)
@@ -129,11 +133,16 @@ func (this *SyncFile) insert(data []byte) (err error) {
 	if file, err = os.OpenFile(this.filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return
 	}
-	file.Write(Int64ToBytes(int64(len(data))))
-	file.Write(data)
+	var list []byte
+	for i := 0; i < len(data); i++ {
+		list = append(list, Int64ToBytes(int64(len(data[i])))...)
+		list = append(list, data[i]...)
+	}
+	file.Write(list)
 	file.Write(rest)
 	file.Sync()
 	file.Close()
+	this.setFileSize(int64(len(list)))
 	return
 }
 
@@ -174,7 +183,7 @@ func (this *SyncFile) Cut() (data []byte, err error) {
 	}
 
 	if !this.GetChain() {
-		this.Write([]byte{})
+		this.Write(true, []byte{})
 		return
 	}
 
@@ -183,7 +192,7 @@ func (this *SyncFile) Cut() (data []byte, err error) {
 	if rest, err = this.Read(ChainFileEntryOffset + int64(len(data))); err != nil {
 		return
 	}
-	err = this.Write(rest)
+	err = this.Write(true, rest)
 	this.SetChain(true)
 	return
 }
