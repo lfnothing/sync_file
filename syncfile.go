@@ -126,10 +126,10 @@ func (this *SyncFile) insert(data ...[]byte) (err error) {
 	var rest []byte
 	var file *os.File
 	this.setChain(false)
+	defer this.setChain(true)
 	if rest, err = this.read(0); err != nil {
 		return
 	}
-	this.setChain(true)
 	if file, err = os.OpenFile(this.filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return
 	}
@@ -190,6 +190,7 @@ func (this *SyncFile) Cut() (data []byte, err error) {
 	var rest []byte
 	this.SetChain(false)
 	if rest, err = this.Read(ChainFileEntryOffset + int64(len(data))); err != nil {
+		this.SetChain(true)
 		return
 	}
 	err = this.Write(true, rest)
