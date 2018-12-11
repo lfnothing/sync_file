@@ -52,10 +52,7 @@ func NewSyncFileService() *SyncFileService {
 }
 
 func (this *SyncFileService) Register(filepath string, chain bool) {
-	if _, ok := this.files[filepath]; ok {
-		return
-	}
-	this.files[filepath] = NewSyncFile(filepath, chain)
+	this.files[filepath] = RegisterSyncFile(filepath, chain)
 	this.inputs[filepath] = make(chan SyncFileServiceData)
 	this.outputs[filepath] = make(chan SyncFileServiceData)
 }
@@ -141,9 +138,9 @@ func SyncFileServiceStart() {
 }
 
 //--------------------------------------
-// sync file register
+// sync file service register
 //--------------------------------------
 
-func RegisterSyncFile(filepath string, chain bool) {
+func RegisterService(filepath string, chain bool) {
 	syncFileService.Register(filepath, chain)
 }

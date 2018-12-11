@@ -199,3 +199,18 @@ func (this *SyncFile) Cut() (data []byte, err error) {
 	this.SetChain(true)
 	return
 }
+
+//--------------------------------------
+// sync file register
+//--------------------------------------
+
+var (
+	syncfiles = make(map[string]*SyncFile)
+)
+
+func RegisterSyncFile(filepath string, chain bool) *SyncFile {
+	if _, ok := syncfiles[filepath]; !ok {
+		syncfiles[filepath] = NewSyncFile(filepath, chain)
+	}
+	return syncfiles[filepath]
+}

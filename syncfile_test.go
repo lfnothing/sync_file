@@ -18,8 +18,8 @@ var (
 	testData3 = TestDataStruct{3, "3"}
 	testData4 = TestDataStruct{4, "4"}
 
-	syncFile      = NewSyncFile("syncfile.json", false)
-	syncChainFile = NewSyncFile("syncChainFile.json", true)
+	syncFile      = RegisterSyncFile("syncfile.json", false)
+	syncChainFile = RegisterSyncFile("syncChainFile.json", true)
 )
 
 func TestSyncFile_Write(t *testing.T) {

@@ -13,8 +13,8 @@ const (
 )
 
 func init() {
-	RegisterSyncFile(register_sync_file_path1, false)
-	RegisterSyncFile(register_sync_file_path2, true)
+	RegisterService(register_sync_file_path1, false)
+	RegisterService(register_sync_file_path2, true)
 }
 
 func TestSyncFileService_Operation_Write(t *testing.T) {
@@ -321,11 +321,42 @@ func TestSyncFileService_Operation_Cut(t *testing.T) {
 		}
 	}
 
-	if syncFile.getFileSize() != 0 {
+	var register1FileSize int64
+	var register2FileSize int64
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		register1FileOperation := SyncFileServiceData{
+			Filepath:  register_sync_file_path1,
+			Operation: SyncFileSize,
+		}
+		Operation(register1FileOperation)
+		register1Result := Result(register_sync_file_path1)
+		if register1Result.Err != nil {
+			fmt.Printf("Get file %s size error\n", register_sync_file_path1)
+		}
+		register1FileSize = register1Result.Filesize
+	}()
+
+	go func() {
+		defer wg.Done()
+		register2FileOperation := SyncFileServiceData{
+			Filepath:  register_sync_file_path2,
+			Operation: SyncFileSize,
+		}
+		Operation(register2FileOperation)
+		register2Result := Result(register_sync_file_path2)
+		if register2Result.Err != nil {
+			fmt.Printf("Get file %s size error\n", register_sync_file_path2)
+		}
+		register2FileSize = register2Result.Filesize
+	}()
+	wg.Wait()
+	if register1FileSize != 0 {
 		fmt.Println("Sync file cut data error")
 	}
 
-	if syncChainFile.getFileSize() != 0 {
+	if register2FileSize != 0 {
 		fmt.Println("Sync chain file cut data error")
 	}
 }
