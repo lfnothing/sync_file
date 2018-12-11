@@ -2,6 +2,7 @@ package sync_file
 
 import (
 	"os"
+	"path"
 	"sync"
 	"unsafe"
 )
@@ -211,6 +212,11 @@ var (
 func RegisterSyncFile(filepath string, chain bool) *SyncFile {
 	if _, ok := syncfiles[filepath]; !ok {
 		syncfiles[filepath] = NewSyncFile(filepath, chain)
+	}
+
+	// create dir when it doesn't exist
+	if dir, _ := path.Split(filepath); dir != "" {
+		os.MkdirAll(dir, 0755)
 	}
 	return syncfiles[filepath]
 }
